@@ -1,0 +1,94 @@
+{
+  "firstuser": [
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "阿萨大大",
+      "timestamp": 1725966195323
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "asdasd",
+      "timestamp": 1725966197593
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "testmsg",
+      "timestamp": 1725966210257
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "asdasd",
+      "timestamp": 1725967691867
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "asd",
+      "timestamp": 1725967693199
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "asd",
+      "timestamp": 1725967694577
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "asd",
+      "timestamp": 1725967695514
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.5",
+        "ipv6": "fd7a:115c:a1e0::5"
+      },
+      "content": "asd",
+      "timestamp": 1725967697496
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.1",
+        "ipv6": "fd7a:115c:a1e0::1"
+      },
+      "content": "window.ipcBridge.send('requestJSON')",
+      "timestamp": 1726222723887
+    },
+    {
+      "origin": {
+        "ipv4": "100.64.0.1",
+        "ipv6": "fd7a:115c:a1e0::1"
+      },
+      "content": "asdasdasd",
+      "timestamp": 1726222736470
+    }
+  ],
+  "adaptive-application-1726133340897-cqrpa": [
+    {
+      "origin": {
+        "ipv4": "100.64.0.1",
+        "ipv6": "fd7a:115c:a1e0::1"
+      },
+      "content": "，忙不忙，不能，m",
+      "timestamp": 1726420317232
+    }
+  ]
+}

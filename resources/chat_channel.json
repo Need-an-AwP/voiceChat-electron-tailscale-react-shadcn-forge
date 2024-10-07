@@ -1,0 +1,163 @@
+{
+  "firstuser": {
+    "chat": [
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "阿萨大大",
+        "timestamp": 1725966195323
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "asdasd",
+        "timestamp": 1725966197593
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "testmsg",
+        "timestamp": 1725966210257
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "asdasd",
+        "timestamp": 1725967691867
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "asd",
+        "timestamp": 1725967693199
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "asd",
+        "timestamp": 1725967694577
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "asd",
+        "timestamp": 1725967695514
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.5",
+          "ipv6": "fd7a:115c:a1e0::5"
+        },
+        "content": "asd",
+        "timestamp": 1725967697496
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.1",
+          "ipv6": "fd7a:115c:a1e0::1"
+        },
+        "content": "window.ipcBridge.send('requestJSON')",
+        "timestamp": 1726222723887
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.1",
+          "ipv6": "fd7a:115c:a1e0::1"
+        },
+        "content": "asdasdasd",
+        "timestamp": 1726222736470
+      }
+    ],
+    "channels": [
+      {
+        "channel_name": "testName_channel1",
+        "channel_id": "1",
+        "create_time": 1726420317232,
+        "inChannelUsers": []
+      },
+      {
+        "channel_name": "testName_channel2",
+        "channel_id": "2",
+        "create_time": 1726420318456,
+        "inChannelUsers": []
+      }
+    ]
+  },
+  "adaptive-application-1726133340897-cqrpa": {
+    "channels": [
+      {
+        "channel_name": "testName_channel1",
+        "channel_id": "1",
+        "create_time": 1726420319789,
+        "inChannelUsers": []
+      },
+      {
+        "channel_name": "testName_channel2",
+        "channel_id": "2",
+        "create_time": 1726420320123,
+        "inChannelUsers": [
+          {
+            "user_name": "test static user",
+            "ip": {
+              "ipv4": "selfIPv4",
+              "ipv6": "selfIPv6"
+            },
+            "local_audio_state": {
+              "inputMuted": false,
+              "outputMuted": false
+            },
+            "remote_audio_state": {
+              "inputMuted": false,
+              "outputMuted": false
+            },
+            "volume": 1
+          }
+        ]
+      },
+      {
+        "channel_name": "testName_channel3",
+        "channel_id": "3",
+        "create_time": 1726420321567,
+        "inChannelUsers": []
+      },
+      {
+        "channel_name": "teeeeest_channel",
+        "channel_id": "teeeeest_channel-1726496351525",
+        "create_time": 1726496351525,
+        "inChannelUsers": []
+      }
+    ],
+    "chat": [
+      {
+        "origin": {
+          "ipv4": "100.64.0.1",
+          "ipv6": "fd7a:115c:a1e0::1"
+        },
+        "content": "，忙不忙，不能，m",
+        "timestamp": 1726420317234
+      },
+      {
+        "origin": {
+          "ipv4": "100.64.0.4",
+          "ipv6": "fd7a:115c:a1e0::4"
+        },
+        "content": "bvnbvnbvn",
+        "timestamp": 1726420324859
+      }
+    ]
+  }
+}

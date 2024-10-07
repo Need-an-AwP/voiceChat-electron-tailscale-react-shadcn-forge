@@ -1,0 +1,36 @@
+{
+  "firstuser": [
+    {
+      "channel_name": "testName_channel1",
+      "channel_id": "1",
+      "create_time": 1726420317232
+    },
+    {
+      "channel_name": "testName_channel2",
+      "channel_id": "2",
+      "create_time": 1726420318456
+    }
+  ],
+  "adaptive-application-1726133340897-cqrpa": [
+    {
+      "channel_name": "testName_channel1",
+      "channel_id": "1",
+      "create_time": 1726420319789
+    },
+    {
+      "channel_name": "testName_channel2",
+      "channel_id": "2",
+      "create_time": 1726420320123
+    },
+    {
+      "channel_name": "testName_channel3",
+      "channel_id": "3",
+      "create_time": 1726420321567
+    },
+    {
+      "channel_name": "teeeeest_channel",
+      "channel_id": "teeeeest_channel-1726496351525",
+      "create_time": 1726496351525
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "user_name": "test-user-0",
+  "user_id": "0",
+  "user_state": "dotted-line-face",
+  "controllerUrl": "http://1.12.226.82:8080",
+  "nodeServerUrl": "http://1.12.226.82:3000",
+  "nwList": [
+    {
+      "nwName": "firstuser",
+      "admin": true
+    },
+    {
+      "nwName": "adaptive-application-1726133340897-cqrpa",
+      "admin": true
+    }
+  ]
+}
