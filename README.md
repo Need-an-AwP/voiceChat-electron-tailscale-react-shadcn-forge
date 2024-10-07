@@ -55,8 +55,8 @@ This is an Electron-based voice chat application using React, Tailwind CSS, and 
 - `/src`: React前端内容
 - `/go_module`: go编写的tailscale交互方法，通过dll被调用
 - `/resources`: 配置文件及聊天和频道记录文件等
-- `/dist`: 前端编译输出文件夹
-- `/dist`: 应有打包输出文件夹
+- `/dist`: 前端编译输出文件夹(in gitignore)
+- `/out`: 应用打包输出文件夹(in gitignore)
 
 ## 一些技术细节
 
@@ -110,6 +110,16 @@ RNN降噪开关来自 https://uiverse.io/Admin12121/massive-dodo-67
 <br/>通过Lottie播放和定制<br/>为了展示静态图像，每个动态emoji都配有对应的静态svg，这些静态svg也来自该网站，但是是从devTool中手动获取的
 
 ![screenShot](./assets/Screenshot%202024-10-07%20231424.png)
+
+与tailscale网络交互
+- 创建新的网络（在headscale上仅以用户名区别，同时生成一个一次性的不过期的preauth key）
+- 邀请新用户（新设备的唯一加入方式是preauth key）
+- 加入网络（只能通过输入preauth key加入）
+- ~~快速切换网络（未完成）~~
+![createPanel](./assets/Screenshot%202024-10-07%20234758.png)
+
+用户设置页面
+![userPanel](./assets/Screenshot%202024-10-07%20234925.png)
 
 ### 输入降噪
 
