@@ -6618,10 +6618,10 @@ wide-align@^1.1.5:
   dependencies:
     string-width "^1.0.2 || 2 || 3 || 4"
 
-"win-process-audio-capture@file:win-process-audio-capture-0.0.3.tgz":
-  version "0.0.3"
-  resolved "file:win-process-audio-capture-0.0.3.tgz"
-  integrity sha512-oPptiL8QhK5MfYVNeahFlsIRhqNGFcjPYNgulYB0OEO4DD7GHQdIdH6nfF3tzpq/5Fgsaq+gCClCX465jEQhcg==
+"win-process-audio-capture@file:win-process-audio-capture-0.0.4.tgz":
+  version "0.0.4"
+  resolved "file:win-process-audio-capture-0.0.4.tgz"
+  integrity sha512-JVEnB6uauq3QEo1Ojlyue0h0crPPGua2ydSZea6y83y/jxLAyYbboj2gLmw6imGFtcGYLrabOq4v+z3MX5Pxfw==
 
 word-wrap@^1.2.5:
   version "1.2.5"

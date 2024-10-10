@@ -53,7 +53,7 @@ function AudioLevelMeter({ audioStream, className, children }) {
             <div className={`
                 flex flex-row items-center gap-2 z-30 
                 before:content-[''] before:absolute before:inset-0 before:rounded-md
-                ${isActive ? 'before:border-2 before:border-[#2d2d2d]' : ''}
+                ${isActive ? `before:border-2 before:border-[#2d2d2d]` : ''}
                 `}>
                 {children}
             </div>

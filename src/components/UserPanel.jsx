@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import SwitchButton from './switch_Admin12121/switch'
@@ -34,18 +36,21 @@ const UserPanel = ({
         selectedOutput,
         setSelectedInput,
         setSelectedOutput,
+        inputVolume,
+        outputVolume,
+        setInputVolume,
+        setOutputVolume,
         nodesRef,
         audioProcesses,
         captureProcess,
         setCaptureProcess,
-        bufferLengthRef,
-        intervalRef,
-        toggleNoiseReduction
+        processorIntervalRef,
+        toggleNoiseReduction,
+        intervalMs,
+        setIntervalMs
     } = useAudio()
     const [isMicMuted, setIsMicMuted] = useState(false)
     const [isHeadphoneMuted, setIsHeadphoneMuted] = useState(false)
-    const [inputVolume, setInputVolume] = useState(1);
-    const [outputVolume, setOutputVolume] = useState(1);
     const [testVolume, setTestVolume] = useState(false);
     const [addonGain, setAddonGain] = useState(1);
 
@@ -54,17 +59,8 @@ const UserPanel = ({
 
     const [isNoiseReductionEnabled, setIsNoiseReductionEnabled] = useState(true);
 
-    //output selector onchange
-    useEffect(() => {
-        if (localAudioRef.current) {
-            try {
-                localAudioRef.current.setSinkId(selectedOutput)
-            }
-            catch (error) {
-                console.error('Error setting sink ID:', error);
-            }
-        }
-    }, [selectedOutput])
+    const [intervalNum, setIntervalNum] = useState(500)
+
 
     //final stream connect to audio element
     useLayoutEffect(() => {
@@ -114,12 +110,12 @@ const UserPanel = ({
             <div className="flex justify-between pt-2">
                 {/*micphone setting tooltip*/}
                 <TooltipProvider>
-                    <Tooltip delayDuration={50}>
+                    <Tooltip delayDuration={10}>
                         <TooltipTrigger asChild>
                             <Button size="icon" variant="ghost"
                                 onClick={() => {
                                     if (isMicMuted) {
-                                        setInputVolume(0.5)
+                                        setInputVolume(1)
                                     } else {
                                         setInputVolume(0)
                                     }
@@ -128,27 +124,34 @@ const UserPanel = ({
                                 {isMicMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="w-10 h-[150px]">
-                            <Slider
-                                min={0}
-                                max={500}
-                                orientation='vertical'
-                                className="w-full h-full bg-secondary rounded-full"
-                                value={[inputVolume * 100]}
-                                onValueChange={(value) => { setInputVolume(value[0] / 100) }}
-                            />
+                        <TooltipContent className="w-full h-[150px] ml-2">
+                            <div className='flex flex-row gap-6 w-full h-full items-center'>
+                                <Slider
+                                    min={0}
+                                    max={500}
+                                    orientation='vertical'
+                                    className="w-[25px] h-full bg-secondary rounded-full"
+                                    value={[inputVolume * 100]}
+                                    onValueChange={(value) => { setInputVolume(value[0] / 100) }}
+                                />
+                                <div className='flex flex-col gap-2 items-center w-full'>
+                                    <p className='text-sm text-muted-foreground font-bold'>Current Input:</p>
+                                    <p className='text-lg font-bold'>{Math.round(inputVolume * 100)}%</p>
+                                    <p className='text-sm text-muted-foreground'>max input volume <br /> could be 500%</p>
+                                </div>
+                            </div>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
                 {/*headphone setting tooltip*/}
                 <TooltipProvider>
-                    <Tooltip delayDuration={50}>
+                    <Tooltip delayDuration={10}>
                         <TooltipTrigger asChild>
                             <Button size="icon" variant="ghost"
                                 onClick={() => {
                                     if (isHeadphoneMuted) {
-                                        setOutputVolume(0.5)
+                                        setOutputVolume(1)
                                     } else {
                                         setOutputVolume(0)
                                     }
@@ -157,15 +160,22 @@ const UserPanel = ({
                                 {isHeadphoneMuted ? <HeadphoneOff className="h-4 w-4" /> : <Headphones className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="w-10 h-[150px]">
-                            <Slider
-                                min={0}
-                                max={500}
-                                orientation='vertical'
-                                className="w-full h-full bg-secondary rounded-full"
-                                value={[outputVolume * 100]}
-                                onValueChange={(value) => { setOutputVolume(value[0] / 100) }}
-                            />
+                        <TooltipContent className="w-full h-[150px] ml-12">
+                            <div className='flex flex-row gap-1 w-full h-full items-center mr-0'>
+                                <Slider
+                                    min={0}
+                                    max={500}
+                                    orientation='vertical'
+                                    className="w-[25px] h-full bg-secondary rounded-full"
+                                    value={[outputVolume * 100]}
+                                    onValueChange={(value) => { setOutputVolume(value[0] / 100) }}
+                                />
+                                <div className='flex flex-col gap-2 items-center w-full'>
+                                    <p className='text-sm text-muted-foreground font-bold'>Current Output:</p>
+                                    <p className='text-lg font-bold'>{Math.round(outputVolume * 100)}%</p>
+                                    <p className='text-sm text-muted-foreground'>max output volume <br /> could be 500%</p>
+                                </div>
+                            </div>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -204,8 +214,29 @@ const UserPanel = ({
                                 >
                                     reset
                                 </Button>
-                            </div>
 
+                            </div>
+                            <div className='flex flex-row gap-1 items-center text-sm'>
+                                <p className='whitespace-nowrap'>request interval</p>
+                                <Input
+                                    className='w-14 h-6'
+                                    value={intervalNum}
+                                    onChange={(e) => {
+                                        setIntervalNum(e.target.value)
+                                    }}
+                                />
+                                <p>ms</p>
+                                <Button
+                                    className='w-16 h-6'
+                                    onClick={() => {
+                                        const value = parseInt(intervalNum);
+                                        if (!isNaN(value) && value > 0) {
+                                            setIntervalMs(value);
+                                            console.log(value);
+                                        }
+                                    }}
+                                >Confirm</Button>
+                            </div>
                             {captureProcess !== null && (
                                 <div className='flex flex-col gap-2'>
                                     <Slider min={0} max={300} value={[addonGain * 100]} onValueChange={(value) => { handleAddonGainChange(value[0] / 100) }} />
@@ -213,8 +244,7 @@ const UserPanel = ({
                                     <canvas className='w-full' ref={addonAudioCanvasRef}></canvas>
                                 </div>)}
 
-                            <div ref={intervalRef}></div>
-                            <div ref={bufferLengthRef}></div>
+                            <div ref={processorIntervalRef}></div>
                         </div>
                     </PopoverContent>
                 </Popover>

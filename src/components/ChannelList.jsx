@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/context-menu"
 import { Progress } from "@/components/ui/progress"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Airplay } from 'lucide-react';
+import { Airplay, Mic } from 'lucide-react';
 import { Slider } from "@/components/ui/slider"
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -36,15 +36,25 @@ const ChannelList = ({ userConfig, selfIPs }) => {
     const { rtcLocalPCs, receivedStreams, connectionState, channels, setChannels, dataChannels } = useRTC()
     const { inVoiceChannel, setInVoiceChannel } = useInVoiceChannel()
     const { blankStreamRef } = useTailscale()
-
-    const quitChannel = useRef({})
     const [enterChannelDisabled, setEnterChannelDisabled] = useState(false);
-    const { ctx_main, finalStream, nodesRef } = useAudio()
+    const {
+        ctx_main,
+        finalStream,
+        nodesRef,
+        outputVolume,
+    } = useAudio()
+
+    const audioContextsRef = useRef({});
+    const gainNodesRef = useRef({})
+    const quitChannel = useRef({})
     const audioElementsRef = useRef({})
     const trackReplacedPCsRef = useRef({})
     const streamsRef = useRef({})
+    const [channelUserAudioState, setChannelUserAudioState] = useState({})
+    // const [remoteAudioState, setRemoteAudioState] = useState({})
+    const [channelUserVolume, setChannelUserVolume] = useState({})
 
-
+    // send data with datachannel when enter or quit channel
     useEffect(() => {
         //quit channel
         if (Object.keys(inVoiceChannel).length === 0) {
@@ -93,6 +103,12 @@ const ChannelList = ({ userConfig, selfIPs }) => {
     }, [inVoiceChannel, setChannels, dataChannels])
 
     useEffect(() => {
+        const resumeAudioContext = async (ctx) => {
+            if (ctx.state === 'suspended') {
+                await ctx.resume();
+            }
+        };
+
         if (inVoiceChannel.localUser) {
             const currentChannel = channels.find(item => item.channel_id === inVoiceChannel.channel_id)
             if (currentChannel.inChannelUsers.length !== 1) {
@@ -113,18 +129,47 @@ const ChannelList = ({ userConfig, selfIPs }) => {
                         }
                     });
                     console.log('replaced audio track for ', ip)
-
-                    //e.streams.forEach(stream => { })
                     if (receivedStreams.length === 0) { return }
                     const [stream] = receivedStreams[ip];
-                    streamsRef.current[ip] = stream
+
+
+                    if (!audioContextsRef.current[ip]) {
+                        audioContextsRef.current[ip] = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    const ctx = audioContextsRef.current[ip];
+                    resumeAudioContext(ctx)
+                    console.log(stream)
+                    const sourceNode = ctx.createMediaStreamSource(stream);
+                    const gainNode = ctx.createGain();
+                    gainNode.gain.value = 1
+                    const destination = ctx.createMediaStreamDestination();
+                    const analyser = ctx.createAnalyser();
+                    sourceNode.connect(gainNode);
+                    gainNode.connect(destination);
+
+                    //gainNode.connect(analyser);
+                    //const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    //setInterval(() => {
+                    //    analyser.getByteFrequencyData(dataArray);
+                    //    console.log(dataArray)
+                    //}, 1000);
+                    //streamsRef.current[ip] = stream
+
+                    gainNodesRef.current[ip] = gainNode
+
+                    const silentAudio = new Audio();
+                    silentAudio.srcObject = stream;//origin stream spoofing for ctx can get vaild stream
+                    silentAudio.volume = 0;
+                    silentAudio.play().catch(e => console.log('spoofed audio play failed:', e));
 
                     if (!audioElementsRef.current[ip]) {
                         const audioEl = new Audio()
                         audioElementsRef.current[ip] = audioEl
                     }
-                    audioElementsRef.current[ip].srcObject = stream
+                    audioElementsRef.current[ip].srcObject = destination.stream
 
+                    setChannelUserVolume(prev => ({ ...prev, [ip]: 1 }))
+                    setChannelUserAudioState(prev => ({ ...prev, [ip]: { inputMuted: false, outputMuted: false } }))
                 })
             }
         } else {
@@ -139,6 +184,21 @@ const ChannelList = ({ userConfig, selfIPs }) => {
         }
     }, [channels])
 
+    // global output volume adjustment
+    useEffect(() => {
+        console.log('output volume changed to', outputVolume)
+        if (gainNodesRef.current) {
+            Object.entries(gainNodesRef.current).forEach(([ip, gainNode]) => {
+                if (channelUserAudioState[ip].outputMuted) {
+                    gainNode.gain.value = 0
+                } else {
+                    gainNode.gain.value = outputVolume
+                }
+            })
+        }
+    }, [outputVolume])
+
+    // judge if channels is allowed to enter
     useEffect(() => {
         //console.log(connectionState)
         if (Object.keys(connectionState).length === 0) {
@@ -159,40 +219,35 @@ const ChannelList = ({ userConfig, selfIPs }) => {
             user_name: userConfig.user_name,
             user_id: userConfig.user_id,
             ip: { ipv4: selfIPs.ipv4, ipv6: selfIPs.ipv6 },
-            local_audio_state: { inputMuted: false, outputMuted: false },
-            remote_audio_state: { inputMuted: false, outputMuted: false },
-            volume: 1,
+            // local_audio_state: { inputMuted: false, outputMuted: false },
+            // remote_audio_state: { inputMuted: false, outputMuted: false },
+            // volume: 1,
         };
         setInVoiceChannel({
             ...item,
             localUser: localUser
         });
+        setChannelUserAudioState(prev => ({ ...prev, [selfIPs.ipv4]: { inputMuted: false, outputMuted: false } }))
+        // setRemoteAudioState(prev => ({ ...prev, [selfIPs.ipv4]: { inputMuted: false, outputMuted: false } }))
+        setChannelUserVolume(prev => ({ ...prev, [selfIPs.ipv4]: 1 }))
     }
 
-    const updateUserProperty = (userIndex, path, value) => {
-        setInVoiceChannel(prevState => {
-            const newUsers = [...prevState.inChannelUsers];
-            const newUser = { ...newUsers[userIndex] };
-
-            // 使用递归函数来更新嵌套属性
-            const updateNestedProperty = (obj, pathArray, val) => {
-                if (pathArray.length === 1) {
-                    obj[pathArray[0]] = val;
-                } else {
-                    const key = pathArray.shift();
-                    obj[key] = { ...obj[key] };
-                    updateNestedProperty(obj[key], pathArray, val);
-                }
-            };
-
-            updateNestedProperty(newUser, path.split('.'), value);
-            newUsers[userIndex] = newUser;
-
-            return { ...prevState, inChannelUsers: newUsers };
-        });
-    };
-
     const handleHangup = () => {
+        Object.entries(audioElementsRef.current).forEach(([ip, audioEl]) => {
+            audioEl.pause()
+            audioEl.srcObject = null
+            delete audioElementsRef.current[ip]
+        })
+        Object.entries(audioContextsRef.current).forEach(([ip, ctx]) => {
+            ctx.close().catch(err => {
+                console.error(`close audio context ${ip} failed:`, err);
+            });
+            delete audioContextsRef.current[ip];
+        });
+        gainNodesRef.current = {};
+
+        // replace audio track back to blankStream
+
         quitChannel.current = inVoiceChannel
         setInVoiceChannel({})
     }
@@ -223,84 +278,102 @@ const ChannelList = ({ userConfig, selfIPs }) => {
                                         if (user.user_name === userConfig.user_name) {
                                             return (
                                                 // local user
-                                                <div key={index} className="my-1 p-1 pr-0 flex flex-row gap-2 items-center rounded-md hover:bg-secondary">
+                                                <AudioLevelMeter
+                                                    audioStream={finalStream}
+                                                    key={index}
+                                                    className="my-1 p-1 pr-0 flex flex-row gap-2 items-center rounded-md hover:bg-secondary"
+                                                >
                                                     <Avatar className="h-8 w-8 mr-2">
                                                         <AvatarImage src="/user-avatar.jpg" alt="User" />
                                                         <AvatarFallback className="text-md justify-center items-center bg-neutral-500">
                                                             {user.user_name.slice(0, 2).toUpperCase()}
                                                         </AvatarFallback>
                                                     </Avatar>
-                                                    <div className="text-sm font-medium text-white">{user.user_name}</div>
-                                                </div>
+                                                    <div className="text-sm font-medium text-blue-200">{user.user_name}</div>
+                                                </AudioLevelMeter>
                                             )
                                         } else {
-                                            return (
-                                                //remote user
-                                                <ContextMenu>
-                                                    <ContextMenuTrigger>
-                                                        <AudioLevelMeter
-                                                            audioStream={streamsRef.current[user.ip.ipv4]}
-                                                            key={index}
-                                                            className="my-1 p-1 pr-0 flex flex-row gap-2 items-center rounded-md hover:bg-secondary"
-                                                        >
-                                                            <Avatar className="h-8 w-8 mr-2">
-                                                                <AvatarImage src="/user-avatar.jpg" alt="User" />
-                                                                <AvatarFallback className="text-md justify-center items-center bg-neutral-500">
-                                                                    {user.user_name.slice(0, 2).toUpperCase()}
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="text-sm font-medium text-white">{user.user_name}</div>
-                                                        </AudioLevelMeter>
-                                                        
-                                                        <audio
-                                                            className="w-40 hidden"
-                                                            ref={el => {
-                                                                if (el) {
-                                                                    audioElementsRef.current[user.ip.ipv4] = el
-                                                                }
-                                                            }}
-                                                            controls
-                                                            autoPlay
-                                                        />
-                                                    </ContextMenuTrigger>
-                                                    <ContextMenuContent className="w-64">
-                                                        <ContextMenuCheckboxItem
-                                                            onSelect={(event) => { event.preventDefault() }}
-                                                            checked={user.local_audio_state.outputMuted}
-                                                            onCheckedChange={(checked) => {
-                                                                updateUserProperty(index, 'volume', 0)
-                                                                updateUserProperty(index, 'local_audio_state.outputMuted', checked)
-                                                            }}
-                                                            className={`${user.local_audio_state.outputMuted ? 'bg-red-500 focus:bg-red-500' : ''}`}
-                                                        >
-                                                            mute this user's output
-                                                        </ContextMenuCheckboxItem >
-                                                        <ContextMenuCheckboxItem
-                                                            onSelect={(event) => { event.preventDefault() }}
-                                                            checked={user.local_audio_state.inputMuted}
-                                                            onCheckedChange={(checked) => updateUserProperty(index, 'local_audio_state.inputMuted', checked)}
-                                                            className={`${user.local_audio_state.inputMuted ? 'bg-red-500 focus:bg-red-500' : ''}`}
-                                                        >
-                                                            mute input for this user
-                                                        </ContextMenuCheckboxItem >
-
-                                                        <ContextMenuSeparator />
-
-                                                        <ContextMenuItem onSelect={(event) => { event.preventDefault() }}>
-                                                            <Slider
-                                                                min={0}
-                                                                max={300}
-                                                                value={[user.volume * 100]}
-                                                                onValueChange={(value) => {
-                                                                    updateUserProperty(index, 'volume', value[0] / 100)
-                                                                    updateUserProperty(index, 'local_audio_state.outputMuted', false)
+                                            if (channelUserAudioState[user.ip.ipv4]) {
+                                                return (
+                                                    //remote user
+                                                    <ContextMenu>
+                                                        <ContextMenuTrigger>
+                                                            <AudioLevelMeter
+                                                                // audioStream={streamsRef.current[user.ip.ipv4]}
+                                                                audioStream={audioElementsRef.current[user.ip.ipv4] && (audioElementsRef.current[user.ip.ipv4].srcObject)}
+                                                                key={index}
+                                                                className={`my-1 p-1 pr-0 flex flex-row gap-2 items-center rounded-md hover:bg-secondary ${channelUserAudioState[user.ip.ipv4].outputMuted ? 'bg-red-500 bg-opacity-60' : ''}`}
+                                                            >
+                                                                <Avatar className="h-8 w-8 mr-2">
+                                                                    <AvatarImage src="/user-avatar.jpg" alt="User" />
+                                                                    <AvatarFallback className="text-md justify-center items-center bg-neutral-500">
+                                                                        {user.user_name.slice(0, 2).toUpperCase()}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="text-sm font-medium text-white">{user.user_name}</div>
+                                                            </AudioLevelMeter>
+                                                            <audio
+                                                                className="w-40 hidden"
+                                                                ref={el => {
+                                                                    if (el) { audioElementsRef.current[user.ip.ipv4] = el }
                                                                 }}
+                                                                controls
+                                                                autoPlay
                                                             />
-                                                        </ContextMenuItem>
+                                                        </ContextMenuTrigger>
+                                                        <ContextMenuContent className="w-64">
+                                                            <ContextMenuCheckboxItem
+                                                                onSelect={(event) => { event.preventDefault() }}
+                                                                checked={channelUserAudioState[user.ip.ipv4].outputMuted}
+                                                                onCheckedChange={(checked) => {
+                                                                    setChannelUserAudioState(prev => ({ ...prev, [user.ip.ipv4]: { ...prev[user.ip.ipv4], outputMuted: checked } }))
+                                                                    if (checked) {
+                                                                        gainNodesRef.current[user.ip.ipv4].gain.value = 0
+                                                                    }
+                                                                    else {
+                                                                        gainNodesRef.current[user.ip.ipv4].gain.value = 1
+                                                                        if (channelUserVolume[user.ip.ipv4] < 0.05) {
+                                                                            setChannelUserVolume(prev => ({ ...prev, [user.ip.ipv4]: 1 }))
+                                                                        }
+                                                                    }
 
-                                                    </ContextMenuContent>
-                                                </ContextMenu>
-                                            )
+                                                                }}
+                                                                className={`${channelUserAudioState[user.ip.ipv4].outputMuted ? 'bg-red-500 focus:bg-red-500' : ''}`}
+                                                            >
+                                                                mute this user's output
+                                                            </ContextMenuCheckboxItem >
+                                                            <ContextMenuCheckboxItem
+                                                                disabled={true}
+                                                                onSelect={(event) => { event.preventDefault() }}
+                                                                checked={channelUserAudioState[user.ip.ipv4].inputMuted}
+                                                                onCheckedChange={(checked) => {
+                                                                    setChannelUserAudioState(prev => ({ ...prev, [user.ip.ipv4]: { ...prev[user.ip.ipv4], inputMuted: checked } }))
+
+                                                                }}
+                                                                className={`${channelUserAudioState[user.ip.ipv4].inputMuted ? 'bg-red-500 focus:bg-red-500' : ''}`}
+                                                            >
+                                                                mute input for this user
+                                                            </ContextMenuCheckboxItem >
+
+                                                            <ContextMenuSeparator />
+
+                                                            <ContextMenuItem onSelect={(event) => { event.preventDefault() }}>
+                                                                <Mic className="mr-2 h-4 w-4" />
+                                                                <Slider
+                                                                    min={0}
+                                                                    max={300}
+                                                                    value={[channelUserVolume[user.ip.ipv4] * 100]}
+                                                                    onValueChange={(value) => {
+                                                                        gainNodesRef.current[user.ip.ipv4].gain.value = value[0] / 100
+                                                                        setChannelUserVolume(prev => ({ ...prev, [user.ip.ipv4]: value[0] / 100 }))
+                                                                    }}
+                                                                />
+                                                            </ContextMenuItem>
+                                                        </ContextMenuContent>
+
+                                                    </ContextMenu>
+                                                )
+                                            }
                                         }
                                     })}
                                 </div>

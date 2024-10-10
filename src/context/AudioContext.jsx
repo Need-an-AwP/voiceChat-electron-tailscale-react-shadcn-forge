@@ -23,6 +23,8 @@ export const AudioProvider = ({ children }) => {
         addonDestinationNode: null,
         destinationNode: null,
     })
+    const [inputVolume, setInputVolume] = useState(1);
+    const [outputVolume, setOutputVolume] = useState(1);
     const [addonGain, setAddonGain] = useState(1);
     const localAudioCanvasRef = useRef(null);
     const localAudioRef = useRef(null);
@@ -33,10 +35,10 @@ export const AudioProvider = ({ children }) => {
     const [isWorkletRegistered, setIsWorkletRegistered] = useState(false);
     const [audioProcesses, setAudioProcesses] = useState([])
     const [captureProcess, setCaptureProcess] = useState(null)
-    const captureIntervalRef = useRef(null)
 
     const bufferLengthRef = useRef(null);
-    const intervalRef = useRef(null);
+    const processorIntervalRef = useRef(null);
+    const [intervalMs, setIntervalMs] = useState(500)
 
 
     const stopAllTracks = (stream) => {
@@ -105,13 +107,6 @@ export const AudioProvider = ({ children }) => {
                 video: false
             })
                 .then((newlocalStream) => {
-                    //localStream.getAudioTracks().forEach(track => {
-                    //    track.stop();
-                    //    localStream.removeTrack(track);
-                    //})
-                    //newlocalStream.getAudioTracks().forEach(track => {
-                    //    localStream.addTrack(track);
-                    //})
                     setLocalStream(newlocalStream);
 
                     const ctx_main = ctx_mainRef.current
@@ -134,6 +129,16 @@ export const AudioProvider = ({ children }) => {
             }
         }
     }, [selectedOutput])
+
+    //input volume change
+    useEffect(() => {
+        if (nodesRef.current.gainNode) {
+            nodesRef.current.gainNode.gain.value = inputVolume;
+        }
+    }, [inputVolume])
+
+    //output volume change
+    
 
     //init noise reduce node and connect audio process nodes
     useEffect(() => {
@@ -266,9 +271,8 @@ export const AudioProvider = ({ children }) => {
                             bufferLengthRef.current.innerHTML = 'buffer length in audioworklet: ' + '<br/>' + event.data.data;
                         }
                     } else {
-                        if (intervalRef.current) {
-                            //console.log(event.data)
-                            intervalRef.current.innerHTML = 'audio data to processor interval: ' + '<br/>' + event.data + 'ms';
+                        if (processorIntervalRef.current) {
+                            processorIntervalRef.current.innerHTML = 'audio data to processor interval: ' + '<br/>' + event.data + 'ms';
                         }
                     }
                 }
@@ -302,16 +306,16 @@ export const AudioProvider = ({ children }) => {
     }, [localStream])
 
     const toggleNoiseReduction = (isEnabled) => {
-        if (!nodesRef.current.sourceNode || !nodesRef.current.gainNode || 
+        if (!nodesRef.current.sourceNode || !nodesRef.current.gainNode ||
             !nodesRef.current.processorNode || !nodesRef.current.mergerNode) {
             console.error("Audio nodes are not initialized");
             return;
         }
-    
+
         // 断开所有相关连接
         nodesRef.current.gainNode.disconnect();
         nodesRef.current.processorNode.disconnect();
-    
+
         if (isEnabled) {
             // 启用降噪
             nodesRef.current.gainNode.connect(nodesRef.current.processorNode);
@@ -320,7 +324,7 @@ export const AudioProvider = ({ children }) => {
             // 禁用降噪，直接连接
             nodesRef.current.gainNode.connect(nodesRef.current.mergerNode);
         }
-    };    
+    };
 
     //audio capture process id check loop
     useEffect(() => {
@@ -338,88 +342,58 @@ export const AudioProvider = ({ children }) => {
             }
             setAudioProcesses(newProcessList)
         }, 2000);
+        // initialize before capture
+        console.log(window.winAudioCapture.initializeCapture())
 
         return () => {
             clearInterval(audioCaptureInterval);
         };
     }, [])
 
-    //capture addon loop
+    //capture module callback
+    const captureStatus = useRef(false)
     useEffect(() => {
+        let captureControl = null
         if (captureProcess !== null) {
-            console.log(window.winAudioCapture.initializeCapture())
             console.log(window.winAudioCapture.initializeCLoopbackCapture(captureProcess))
 
-            const intervalMs = 500
-            /*
-            captureIntervalRef.current = setInterval(() => {
-                const res = window.winAudioCapture.getActivateStatus()
-                if (res.interfaceActivateResult === 0) {
-                    const result = window.winAudioCapture.whileCaptureProcessAudio()
-                    if (result !== null && nodesRef.current.handleAddonDataNode !== null) {
-                        ctx_mainRef.current.decodeAudioData(result.wavData.buffer)
-                            .then((audioBuffer) => {
-                                const wavChannelData = audioBuffer.getChannelData(0)
-                                nodesRef.current.handleAddonDataNode.port.postMessage(wavChannelData)
-                            })
-                    }
+            const res = window.winAudioCapture.getActivateStatus()
+            if (res.interfaceActivateResult === 0) {
+                try {
+                    captureControl = window.winAudioCapture.capture_async(intervalMs, (err, result) => {
+                        if (err) {
+                            console.error("Capture error:", err);
+                            return;
+                        }
+                        //console.log(result)
+                        captureStatus.current = true
+                        if (result !== null && nodesRef.current.handleAddonDataNode !== null) {
+                            ctx_mainRef.current.decodeAudioData(result.wavData.buffer)
+                                .then((audioBuffer) => {
+                                    const wavChannelData = audioBuffer.getChannelData(0)
+                                    nodesRef.current.handleAddonDataNode.port.postMessage(wavChannelData)
+                                })
+                                .catch((err) => {
+                                    console.log("decode error:", err);
+                                })
+                        }
+                    })
                 }
-            }, 10);
-            */
-            captureIntervalRef.current = setInterval(() => {
-                const res = window.winAudioCapture.getActivateStatus()
-                if (res.interfaceActivateResult === 0) {
-                    try {
-                        window.winAudioCapture.capture_500_async(intervalMs, (err, result) => {
-                            if (err) {
-                                console.error("Capture error:", err);
-                                return;
-                            }
-                            //console.log(result)
-                            if (result !== null && nodesRef.current.handleAddonDataNode !== null) {
-                                ctx_mainRef.current.decodeAudioData(result.wavData.buffer)
-                                    .then((audioBuffer) => {
-                                        const wavChannelData = audioBuffer.getChannelData(0)
-                                        nodesRef.current.handleAddonDataNode.port.postMessage(wavChannelData)
-                                    })
-                            }
-                        })
-                    }
-                    catch (error) {
-                        console.error("Capture error:", error);
-                    }
+                catch (error) {
+                    console.error("Capture error:", error);
                 }
-            }, intervalMs)
+            } else {
+                console.log('initialize capture failed')
+            }
         }
 
         return () => {
-            if (captureIntervalRef.current) {
-                clearInterval(captureIntervalRef.current);
+            if (captureStatus.current === true && captureControl !== null) {
+                captureControl.stop()
+                captureStatus.current = false
             }
         }
-    }, [captureProcess])
-
-    //audio capture process id check loop
-    useEffect(() => {
-        const audioCaptureInterval = setInterval(async () => {
-            const electronPid = await window.winAudioCapture.getElectronProcessId()
-            const processesList = window.winAudioCapture.getAudioProcessInfo()
-            const newProcessList = []
-            for (let item of processesList) {
-                if (!electronPid.includes(item.processId) &&
-                    item.processId !== 0 &&
-                    item.processName !== 'audiodg.exe'
-                ) {
-                    newProcessList.push(item)
-                }
-            }
-            setAudioProcesses(newProcessList)
-        }, 2000);
-
-        return () => {
-            clearInterval(audioCaptureInterval);
-        };
-    }, [])
+    }, [captureProcess, intervalMs])
 
 
     const value = {
@@ -432,13 +406,19 @@ export const AudioProvider = ({ children }) => {
         selectedOutput,
         setSelectedInput,
         setSelectedOutput,
+        inputVolume,
+        outputVolume,
+        setInputVolume,
+        setOutputVolume,
         nodesRef,
         audioProcesses,
         captureProcess,
         setCaptureProcess,
         bufferLengthRef,
-        intervalRef,
+        processorIntervalRef,
         toggleNoiseReduction,
+        intervalMs,
+        setIntervalMs
     }
     return <AudioUtilsContext.Provider value={value}>
         {children}

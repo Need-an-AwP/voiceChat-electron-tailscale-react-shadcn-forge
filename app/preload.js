@@ -39,7 +39,7 @@ contextBridge.exposeInMainWorld('winAudioCapture', {
     initializeCLoopbackCapture: (processId) => test_addon.initializeCLoopbackCapture(processId),
     getActivateStatus: () => test_addon.getActivateStatus(),
     whileCaptureProcessAudio: () => test_addon.whileCaptureProcessAudio(),
-    capture_500_async: (intervalMs, callback) => test_addon.capture_500_async(intervalMs, callback),
+    capture_async: (intervalMs, callback) => test_addon.capture_async(intervalMs, callback),
 });
 
 window.addEventListener('DOMContentLoaded', () => {

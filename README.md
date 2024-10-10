@@ -6,6 +6,34 @@ There is no sepcific name for this project, so i call it "voicechat-electron-tai
 
 This is an Electron-based voice chat application using React, Tailwind CSS, and Tailscale integration.
 
+## MVP功能
+- [ ] 嵌入式tailscale客户端
+- 频道机制
+  - [ ] 对用户静音
+  - [ ] 静音用户
+- 本地音频管理
+  - [x] webrtc语音聊天
+  - [x] 输入音量调整
+  - [x] 输出音量调整
+  - [x] 频谱显示
+
+
+
+## 非MVP功能
+- [x] windows进程音频捕获
+- [ ] 用户状态展示
+- [x] 输入降噪
+- [x] 漂亮的用户界面？
+- [ ] 聊天支持动态emoji
+- [ ] 文件传送
+- [ ] 屏幕共享
+- [ ] 观看同一视频bilibili，youtube
+- [ ] 响应式的输入输出音量调整滑块
+
+## 已知问题
+- 进入channel后使用process audio capture可能会导致前端崩溃
+
+
 ## 概述
 
 这是一个使用electron，react和vite搭建的去中心化语言聊天软件。基于私有tailscale网络控制器和自建的derp服务，通过全拓扑webrtc连接实现无中心服务的多人语音聊天
@@ -152,6 +180,14 @@ https://jmvalin.ca/demo/rnnoise
 [转到上文提到的代码段](./src/context/AudioContext.jsx#L256)
 
 ![audioCaptuRepanel](./assets/Screenshot%202024-10-07%20234717.png)
+
+### 全局及单一用户输出音频调整
+
+在`ChannelList.jsx`中通过来自`rtccontext`的`usertc`得到rtc连接ontrack方法获取的原始音频流stream
+这里试图通过重新建立一个媒体流来使用gain节点调整音量，但是直接通过createMediaStreamSource创建audiocontext的来源无法得到有效的数据（使用analyser调试可知source中传出数据全为0）<br/>
+所以使用静音播放原始流来诱骗，使audiocontext得到有效的数据，得以通过gain节点调整音量
+
+[转到上文提到的代码段](./src/components/ChannelList.jsx#L160)
 
 ## Release
 

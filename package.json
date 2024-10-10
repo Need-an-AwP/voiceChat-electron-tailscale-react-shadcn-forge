@@ -61,7 +61,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vite-plugin-electron": "^0.28.7",
-    "win-process-audio-capture": "file:win-process-audio-capture-0.0.3.tgz"
+    "win-process-audio-capture": "file:win-process-audio-capture-0.0.4.tgz"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.4.0",

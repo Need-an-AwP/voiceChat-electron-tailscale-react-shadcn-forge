@@ -14,6 +14,7 @@ export const RTCProvider = ({ children }) => {
     //const [rtcLocalPCs, setRtcLocalPCs] = useState({});
     const rtcLocalPCsRef = useRef({});
     const receivedStreamsRef = useRef({});
+    // const [receivedStreams, setReceivedStreams] = useState({});
     const [connectionState, setConnectionState] = useState({});
     const rtcLocalFlagsRef = useRef({});
     const [localPCtimeouts, setLocalPCtimeouts] = useState({});
@@ -135,6 +136,7 @@ export const RTCProvider = ({ children }) => {
         pc.ontrack = (e) => {
             //console.log('pc ontrack', e)
             receivedStreamsRef.current[ip] = e.streams
+            // setReceivedStreams(prev => ({ ...prev, [ip]: e.streams }))
         }
 
         //positively reconnect rtc
@@ -221,7 +223,7 @@ export const RTCProvider = ({ children }) => {
                             console.log('request offer proactively')
                             socket.emit('requestOffer', JSON.stringify({ receiverIP: { ipv4: selfIPs.ipv4, ipv6: selfIPs.ipv6 } }))
                         }
-                    }, 10000);
+                    }, 15000);
                 }
             }
         })
@@ -241,6 +243,7 @@ export const RTCProvider = ({ children }) => {
             r_pc.ontrack = (e) => { 
                 //console.log('r_pc ontrack', e)
                 receivedStreamsRef.current[msg.offerIP.ipv4] = e.streams
+                // setReceivedStreams(prev => ({ ...prev, [msg.offerIP.ipv4]: e.streams }))
             }
             
             r_pc.oniceconnectionstatechange = () => {
@@ -412,6 +415,7 @@ export const RTCProvider = ({ children }) => {
         rtcLocalPCs: rtcLocalPCsRef.current,
         //rtcLocalPCs,
         receivedStreams: receivedStreamsRef.current,
+        //receivedStreams,
         connectionState,
         rtcLocalFlags: rtcLocalFlagsRef.current,
         dataChannels: dataChannelRef.current,
